@@ -1,74 +1,29 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../context/useAuth.js";
+
+const actions = [
+  { to: "/add-transaction", title: "Add transaction", text: "Record income or an expense." },
+  { to: "/transactions", title: "View transactions", text: "See, review and delete your entries." },
+  { to: "/statistics", title: "View statistics", text: "Compare income and expenses with charts." },
+];
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
-  };
+  const { user } = useAuth();
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>💰 Finance Tracker Dashboard</h1>
-      <p style={{ color: "#555" }}>Welcome! Choose what you'd like to do today.</p>
+    <>
+      <h1>Hello, {user.username}</h1>
+      <p className="muted">Choose what you would like to do today.</p>
 
-      <div style={styles.menu}>
-        <button style={styles.button} onClick={() => navigate("/add-transaction")}>
-          ➕ Add Transaction
-        </button>
-        <button style={styles.button} onClick={() => navigate("/transactions")}>
-          📋 View Transactions
-        </button>
-        <button style={styles.button} onClick={() => navigate("/statistics")}>
-          📊 View Statistics
-        </button>
+      <div className="grid">
+        {actions.map(({ to, title, text }) => (
+          <Link key={to} to={to} className="card action-card">
+            <h2>{title}</h2>
+            <p className="muted">{text}</p>
+          </Link>
+        ))}
       </div>
-
-      <button style={styles.logoutButton} onClick={handleLogout}>
-        🚪 Logout
-      </button>
-    </div>
+    </>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: "600px",
-    margin: "3rem auto",
-    textAlign: "center",
-    backgroundColor: "#f9f9f9",
-    padding: "2rem",
-    borderRadius: "16px",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-  },
-  header: {
-    marginBottom: "1rem",
-  },
-  menu: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-    marginTop: "2rem",
-  },
-  button: {
-    padding: "1rem",
-    fontSize: "1.1rem",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    transition: "background-color 0.3s ease",
-  },
-  logoutButton: {
-    marginTop: "2rem",
-    backgroundColor: "#dc3545",
-    color: "white",
-    padding: "0.8rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-};

@@ -1,114 +1,104 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { ApiError } from "../api/client.js";
+import { createTransaction } from "../api/transactions.js";
+import { todayInputValue } from "../utils/format.js";
+
+const CATEGORY_SUGGESTIONS = ["Salary", "Food", "Rent", "Transport", "Entertainment", "Health", "Shopping"];
 
 export default function AddTransactionPage() {
   const navigate = useNavigate();
 
-  const [type, setType] = useState("Income");
+  const [type, setType] = useState("Expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(todayInputValue);
+  const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const newTransaction = { type, amount: Number(amount), category, date };
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    setFieldErrors({});
 
     try {
-      const response = await fetch("http://localhost:5000/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTransaction),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to add transaction");
-        return;
-      }
-
-      alert("Transaction added!");
+      await createTransaction({ type, amount: Number(amount), category, date });
       navigate("/transactions");
-    } catch (error) {
-      console.error(error);
-      alert("Error connecting to server");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.errors);
+      } else {
+        setError("Something went wrong");
+      }
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>Add New Transaction</h1>
+    <>
+      <h1>Add transaction</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          maxWidth: "350px",
-          margin: "1rem auto",
-          gap: "1rem",
-        }}
-      >
-        {/* Type */}
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          style={{ padding: "0.5rem" }}
-        >
-          <option value="Income">Income</option>
-          <option value="Expense">Expense</option>
-        </select>
+      <form className="card form-card" onSubmit={handleSubmit} noValidate>
+        <label>
+          Type
+          <select value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="Income">Income</option>
+            <option value="Expense">Expense</option>
+          </select>
+          {fieldErrors.type && <span className="field-error">{fieldErrors.type}</span>}
+        </label>
 
-        {/* Amount */}
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          style={{ padding: "0.5rem" }}
-        />
+        <label>
+          Amount
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0.01"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+          {fieldErrors.amount && <span className="field-error">{fieldErrors.amount}</span>}
+        </label>
 
-        {/* Category */}
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-          style={{ padding: "0.5rem" }}
-        />
+        <label>
+          Category
+          <input
+            list="category-suggestions"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            maxLength={50}
+            required
+          />
+          <datalist id="category-suggestions">
+            {CATEGORY_SUGGESTIONS.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+          {fieldErrors.category && <span className="field-error">{fieldErrors.category}</span>}
+        </label>
 
-        {/* Date */}
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          style={{ padding: "0.5rem" }}
-        />
+        <label>
+          Date
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          {fieldErrors.date && <span className="field-error">{fieldErrors.date}</span>}
+        </label>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          style={{
-            padding: "0.7rem",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          ➕ Add Transaction
+        {error && !Object.keys(fieldErrors).length && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          {busy ? "Saving..." : "Add transaction"}
         </button>
       </form>
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        style={{ padding: "0.5rem 1rem", marginTop: "1rem", cursor: "pointer" }}
-      >
-        ← Back to Dashboard
-      </button>
-    </div>
+    </>
   );
 }

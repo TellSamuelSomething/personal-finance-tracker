@@ -1,86 +1,90 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+
+import { ApiError } from "../api/client.js";
+import { useTransactions } from "../hooks/useTransactions.js";
+import { formatAmount, formatDate } from "../utils/format.js";
 
 export default function TransactionListPage() {
-  const navigate = useNavigate();
-  const [transactions, setTransactions] = useState([]);
+  const { transactions, error, remove } = useTransactions();
+  const [deleteError, setDeleteError] = useState(null);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      const response = await fetch("http://localhost:5000/api/transactions");
-      const data = await response.json();
-      setTransactions(data);
-    };
-    fetchTransactions();
-  }, []);
+  async function handleDelete(transaction) {
+    if (!window.confirm(`Delete the ${transaction.category} transaction of ${formatAmount(transaction.amount)}?`)) return;
 
-const handleDelete = async (id) => {
-  const confirmed = window.confirm("Are you sure you want to delete this transaction?");
-  if (!confirmed) return; // ❌ user cancelled → do nothing
-
-  try {
-    const response = await fetch(`http://localhost:5000/api/transactions/${id}`, {
-      method: "DELETE",
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Delete failed");
-      return;
+    setDeleteError(null);
+    try {
+      await remove(transaction._id);
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Could not delete the transaction");
     }
-
-    // Remove from UI after backend confirms
-    setTransactions((prev) => prev.filter((t) => t._id !== id));
-  } catch (err) {
-    console.error("Delete failed:", err);
   }
-};
-
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>Your Transactions</h1>
+    <>
+      <div className="page-header">
+        <h1>Transactions</h1>
+        <Link to="/add-transaction" className="btn btn-primary">
+          Add transaction
+        </Link>
+      </div>
 
-      <table style={{ width: "80%", margin: "auto" }}>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((t) => (
-            <tr key={t._id}>
-              <td>{t.date?.split("T")[0]}</td>
-              <td>{t.type}</td>
-              <td>{t.category}</td>
-              <td style={{ color: t.type === "Expense" ? "red" : "green" }}>
-                {t.amount}
-              </td>
-              <td>
-                <button
-                  onClick={() => handleDelete(t._id)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "20px",
-                    color: "red",
-                  }}
-                >
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {error && (
+        <p className="alert alert-error" role="alert">
+          {error}
+        </p>
+      )}
+      {deleteError && (
+        <p className="alert alert-error" role="alert">
+          {deleteError}
+        </p>
+      )}
+      {!transactions && !error && <p className="muted">Loading...</p>}
 
-      <button onClick={() => navigate("/dashboard")}>Back</button>
-    </div>
+      {transactions && transactions.length === 0 && (
+        <div className="card empty">
+          <p>No transactions yet.</p>
+          <Link to="/add-transaction">Add your first one</Link>
+        </div>
+      )}
+
+      {transactions && transactions.length > 0 && (
+        <div className="card table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th className="num">Amount</th>
+                <th>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((t) => (
+                <tr key={t._id}>
+                  <td>{formatDate(t.date)}</td>
+                  <td>
+                    <span className={`badge badge-${t.type.toLowerCase()}`}>{t.type}</span>
+                  </td>
+                  <td>{t.category}</td>
+                  <td className={`num amount-${t.type.toLowerCase()}`}>
+                    {t.type === "Expense" ? "-" : "+"}
+                    {formatAmount(t.amount)}
+                  </td>
+                  <td className="num">
+                    <button type="button" className="btn btn-danger" onClick={() => handleDelete(t)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }

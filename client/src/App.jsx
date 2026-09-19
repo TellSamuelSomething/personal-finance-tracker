@@ -1,23 +1,30 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom"; // ✅ Needed for routing
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import AddTransactionPage from "./pages/AddTransactionPage";
-import TransactionListPage from "./pages/TransactionListPage";
-import Statistics from "./pages/StatisticsPage";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-function App() {
+import Layout from "./components/Layout.jsx";
+import RequireAuth from "./components/RequireAuth.jsx";
+import AddTransactionPage from "./pages/AddTransactionPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import StatisticsPage from "./pages/StatisticsPage.jsx";
+import TransactionListPage from "./pages/TransactionListPage.jsx";
+
+export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/add-transaction" element={<AddTransactionPage />} />
-      <Route path="/transactions" element={<TransactionListPage />} />
-      <Route path="/statistics" element={<Statistics />} />
+
+      <Route element={<RequireAuth />}>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/add-transaction" element={<AddTransactionPage />} />
+          <Route path="/transactions" element={<TransactionListPage />} />
+          <Route path="/statistics" element={<StatisticsPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
-
-export default App;
