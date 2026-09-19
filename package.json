@@ -2,8 +2,17 @@
   "name": "finance-tracker",
   "version": "1.0.0",
   "private": true,
+  "description": "Track income and expenses with charts. Express and MongoDB API, React client.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "start": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\""
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "start": "concurrently -n server,client \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start:memory": "concurrently -n server,client \"npm run dev:memory --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "lint": "npm run lint --prefix client",
+    "test": "npm test --prefix server"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
