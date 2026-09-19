@@ -1,26 +1,12 @@
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
+import { createApp } from "./app.js";
+import { loadConfig } from "./config.js";
+import { connectDB } from "./utils/connectDB.js";
 
-import transactionRoutes from "./routes/transactionRoutes.js";
-import authRoutes from "./routes/auth.js"; // ✅ ADD THIS
+const config = loadConfig();
 
-dotenv.config();
-const app = express();
+await connectDB(config.mongoUri);
+console.log("MongoDB connected");
 
-app.use(cors());
-app.use(express.json());
-
-// ✅ MOUNT AUTH ROUTES
-app.use("/api/auth", authRoutes);
-
-// Existing transaction routes
-app.use("/api/transactions", transactionRoutes);
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.log(err));
-
-app.listen(5000, () => console.log("🚀 Server running on port 5000"));
+createApp({ jwtSecret: config.jwtSecret, clientOrigin: config.clientOrigin }).listen(config.port, () =>
+  console.log(`Server running on port ${config.port}`)
+);

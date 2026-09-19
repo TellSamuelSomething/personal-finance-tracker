@@ -1,25 +1,31 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+  "description": "Backend API for the Finance Tracker app",
+  "engines": {
+    "node": ">=22"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "Backend server for Finance Tracker app",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env index.js",
+    "dev:memory": "node --watch scripts/dev-memory.js",
+    "start": "node --env-file-if-exists=.env index.js",
+    "test": "vitest run"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.2"
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "mongodb-memory-server": "^11.2.0",
+    "supertest": "^7.2.2",
+    "vitest": "^5.0.1"
   }
 }
