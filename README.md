@@ -23,6 +23,9 @@ Built to practice a complete JavaScript stack: a REST API with authentication an
 **Client** (`client/`)
 - React 19, React Router 7, Recharts, Vite
 
+**End-to-end tests** (`e2e/`)
+- Playwright driving a real browser against the real client and API (with an in-memory MongoDB), nothing mocked
+
 ## Getting started
 
 Requires Node.js 22 or newer.
@@ -63,6 +66,7 @@ The client runs on http://localhost:5173 and forwards `/api` requests to the API
 | `JWT_SECRET` | server, required | Signing secret for login tokens, at least 32 characters |
 | `PORT` | server | API port, default `5000` |
 | `CLIENT_ORIGIN` | server | Origin allowed by CORS, default `http://localhost:5173` |
+| `AUTH_RATE_LIMIT` | server | Login and register requests allowed per address per 15 minutes, default `30` |
 | `VITE_API_URL` | client | API base URL when it is not served from the same origin |
 
 The server refuses to start when a required variable is missing.
@@ -72,8 +76,35 @@ The server refuses to start when a required variable is missing.
 | Command | Description |
 |---------|-------------|
 | `npm test` | Run the server tests |
+| `npm run test:e2e` | Run the browser tests (see Testing) |
 | `npm run lint` | Lint the client |
 | `npm run build` | Build the client for production |
+
+## Testing
+
+Two layers, because they catch different things:
+
+- **Server tests** (`npm test`): the API through supertest, including validation, ownership and rate limits. Fast, no browser.
+- **End-to-end tests** (`npm run test:e2e`): 17 Playwright tests in a real browser against the real client and API. They start both servers on their own ports (5055 and 5175), so they never collide with a running dev server.
+
+First time only, install the browser Playwright drives (or set `PW_CHANNEL=msedge` or `chrome` to use one you already have):
+
+```bash
+npm install --prefix e2e
+npx --prefix e2e playwright install chromium
+```
+
+What the end-to-end suite covers, and why:
+
+| Area | Checked | Why it matters |
+|------|---------|----------------|
+| Access control | Protected pages redirect to login, a rejected token signs the user out, logging out closes the pages again | A broken guard shows other people's pages or a blank screen |
+| Registering and logging in | Success, short password, taken username, wrong password gives the same message as an unknown user, session survives a reload | The main entry point, and the message must not reveal which usernames exist |
+| Transactions | Empty state, sign and order of listed amounts, zero amount and missing category rejected, delete asks first and cancelling keeps the row | The core feature and its input validation |
+| Statistics | Totals and both charts follow the data, empty state | The numbers users act on must be right |
+| Data isolation | A second user sees none of the first user's data, and cannot delete it through the API | The first version of this app had no owner on transactions, this keeps that from coming back |
+
+Every test creates its own user, so they run in parallel against one database and can be repeated in any order. Failures keep a screenshot and a trace (`npx --prefix e2e playwright show-trace <file>`).
 
 ## API
 
