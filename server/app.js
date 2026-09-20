@@ -11,7 +11,7 @@ import transactionRoutes from "./routes/transactionRoutes.js";
  * Builds the Express app without connecting to anything, so tests can use it directly.
  * The JWT secret is read from `jwtSecret` and shared with the controllers through app.locals.
  */
-export function createApp({ jwtSecret, clientOrigin = "http://localhost:5173", limitAuthRequests = true }) {
+export function createApp({ jwtSecret, clientOrigin = "http://localhost:5173", limitAuthRequests = true, authRateLimit = 30 }) {
   const app = express();
   app.locals.jwtSecret = jwtSecret;
 
@@ -21,7 +21,7 @@ export function createApp({ jwtSecret, clientOrigin = "http://localhost:5173", l
 
   if (limitAuthRequests) {
     // Slows down password guessing.
-    app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }));
+    app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: authRateLimit, standardHeaders: true, legacyHeaders: false }));
   }
 
   app.use("/api/auth", authRoutes);

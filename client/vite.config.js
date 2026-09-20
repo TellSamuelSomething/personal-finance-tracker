@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     // In development, API calls to /api are forwarded to the Express server, so no CORS setup is needed.
     proxy: {
-      "/api": "http://localhost:5000",
+      "/api": process.env.API_PROXY_TARGET ?? "http://localhost:5000",
     },
   },
 });

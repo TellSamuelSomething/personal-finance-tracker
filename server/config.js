@@ -15,5 +15,6 @@ export function loadConfig(env = process.env) {
     mongoUri: env.MONGO_URI,
     jwtSecret: env.JWT_SECRET,
     clientOrigin: env.CLIENT_ORIGIN || "http://localhost:5173",
+    authRateLimit: Number(env.AUTH_RATE_LIMIT) || 30,
   };
 }
